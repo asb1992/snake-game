@@ -1,0 +1,289 @@
+<html>
+	
+	<head>
+		
+		<title>Snake!</title>
+		<script type="text/javascript" src="lib/general.js"></script>
+		<script type="text/javascript" src="lib/functional.js"></script>
+		<script type="text/javascript" src="lib/cookies.js"></script>
+		<script type="text/javascript" src="lib/Point.js"></script>
+		
+		<style type="text/css">
+			
+			body
+			{
+			font-family:"Arial", sans-serif;
+			font-size:20px;
+			}
+			
+		</style>
+		
+	</head>
+	
+	<body onkeydown="return move(event)">
+		
+		<canvas id="canvas" width="780" height="300"></canvas><br />
+		Score: <span id="score">0</span><br />
+		High Score: <span id="highscore"></span><br />
+		Space to restart, zero to pause.
+		
+		<script type="text/javascript">
+			
+			// tells us which elements of a (list of (not walls)) are empty spaces.
+			function notmember(array, value) {
+				
+				var found = true;
+				
+				forEach(array, function(element) {
+					
+					if (element.equals(value)) found = false;
+					
+				});
+				
+				return found;
+				
+			}
+			
+			var currentHighScore = Number(getCookie("gmail"));
+			$("highscore").innerHTML = currentHighScore;
+			
+			var baseSpeed = 200; // smaller is faster
+			var speed = baseSpeed;
+			var speedChange = 5;
+			var direction = new Point(0, 0);
+			var queue = [];
+			var pause = false;
+			
+			function move(event) {
+				
+				var key = event.keyCode;
+				
+				if (pause) {
+					
+					pause = false;
+					$("score").innerHTML = 0;
+					snake = snakeOrigin.slice();
+					tock = setInterval(tick, speed = baseSpeed);
+					return;
+					
+				}
+				
+				if (key == 48) {
+					
+					if (tock) {
+						
+						clearInterval(tock);
+						tock = null;
+						
+					}
+					
+					else {
+						
+						queue = []; // prevents commands building up while paused.
+						tock = setInterval(tick, speed);
+						
+					}
+					
+					return;
+					
+				}
+				
+				if (key == 32) {
+					
+					clearInterval(tock);
+					tock = setInterval(tick, baseSpeed);
+					direction = new Point(0, 0);
+					snake = snakeOrigin.slice();
+					var emptySpaces = filter(partial(notmember, snake), notWalls);
+					food = emptySpaces[randInt(emptySpaces.length)];
+					
+					return;
+					
+				}
+				
+				var point;
+				
+					 if (key == 38) point = new Point(0, -1);
+				else if (key == 40) point = new Point(0, 1);
+				else if (key == 37) point = new Point(-1, 0);
+				else if (key == 39) point = new Point(1, 0);
+				else return;
+				
+				if (direction.equals(new Point(0, 0))) {
+					
+					if (point.equals(new Point(0, -1))) snake = snake.reverse();
+					
+					queue.push(point);
+					
+				}
+				
+				// if point doesn't go back on tail
+				else if (!((queue[queue.length - 1] || direction).add(point).equals(new Point(0, 0)))) {
+					
+					// if queue is empty or point isn't the same as next in line
+					if (!queue[0] || !point.equals(queue[queue.length - 1])) {
+						
+						queue.push(point.copy());
+						
+					}
+					
+				}
+				
+			}
+ 			
+			var color = ["white", "red", "green", "black", "black"];
+			           // empty,   wall,  food,   snake,   head
+			
+			var board = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+			var boardWidth  = 51;
+			
+			var walls  = [];
+			var notWalls = [];
+			for (var i = 0; i < board.length; i++) {
+				
+				var point = new Point(i % boardWidth, Math.floor(i / boardWidth));
+				if (board[i]) {walls.push(point.copy());}
+				else {notWalls.push(point.copy());}
+				
+			}
+			
+			var snakeOrigin = [new Point(25, 10), new Point(25, 11), new Point(25, 12)];
+			var snake = snakeOrigin.slice();
+			
+			var emptySpaces = filter(partial(notmember, snake), notWalls);
+			
+			var food = emptySpaces[randInt(emptySpaces.length)];
+			
+			var rectSize  = 10;
+			var spaceSize = rectSize + 2;
+			var ctx = $("canvas").getContext("2d");
+			
+			function drawBoard(board, ctx) {	
+				
+				for (var i = 0; i < board.length; i++) {
+					
+					var x = i % boardWidth;
+					var y = Math.floor(i / boardWidth);
+					ctx.fillStyle = color[board[i]];
+					ctx.fillRect(x * spaceSize, y * spaceSize, rectSize, rectSize);
+					
+				}
+				
+			}
+			
+			function drawSnake(snake, ctx) {	
+				
+				for (var i = 0; i < snake.length; i++) {
+					
+					var scaledSnake = snake[i].multiply(spaceSize);
+					ctx.fillStyle = (i < snake.length - 1 ? color[3] : color[4]);
+					ctx.fillRect(scaledSnake.x, scaledSnake.y, rectSize, rectSize);
+					
+				}
+				
+			}
+			
+			function drawFood(food, ctx) {	
+				
+				var scaledFood = food.multiply(spaceSize);
+				ctx.fillStyle = color[2];
+				ctx.fillRect(scaledFood.x, scaledFood.y, rectSize, rectSize);
+				
+			}
+						
+			function moveSnake(direction, snake) {
+				
+				if (snake[snake.length - 1].add(direction).equals(food)) {
+					
+					snake.push(food);
+					var emptySpaces = filter(partial(notmember, snake), notWalls);
+					food = emptySpaces[randInt(emptySpaces.length)];
+					clearInterval(tock);
+					tock = setInterval(tick, speed -= speedChange);
+					$("score").innerHTML = (snake.length - snakeOrigin.length) * 10;
+					
+				}
+				
+				else if (!direction.equals(new Point(0, 0))) {
+					
+					for (var i = 0; i < snake.length; i++) {
+											
+						if (i != snake.length - 1) { // tail segments
+							
+							snake[i] = new Point(snake[i + 1].x, snake[i + 1].y);
+							
+						}
+						
+						else { // head
+							
+							snake[i] = snake[i].add(direction);
+							
+						}
+						
+					}
+					
+				}
+				
+			}
+			
+			function killSnake(board) {
+				
+				var headX = snake[snake.length - 1].x;
+				var headY = snake[snake.length - 1].y;
+				
+				if (headX >= boardWidth ||
+					headY >= board.length / boardWidth ||
+					headX < 0 ||
+					headY < 0 ||
+					
+					// true if snake head is in the same place as any walls
+					// or tail segments.
+					reduce(
+						function(base, elem) {
+							
+							return base + elem.equals(snake[snake.length - 1]);
+							
+						}, 0, walls.concat(snake.slice(0, snake.length - 1)))) {
+					
+					clearInterval(tock);
+					direction = new Point(0, 0);
+					queue = [];
+					
+					if (Number($("score").innerHTML) > currentHighScore) {
+						
+						setCookie("gmail", Number($("score").innerHTML), 999)
+						$("highscore").innerHTML = Number($("score").innerHTML);
+						currentHighScore = Number($("score").innerHTML);
+						
+					}
+					
+					pause = true;
+					
+				}
+				
+			}
+			
+			function tick() {
+				
+				if (queue[0]) direction = queue.shift();
+				
+				moveSnake(direction, snake);
+				killSnake(board);
+				
+				if (!pause) {
+					
+					drawBoard(board, ctx);
+					drawFood(food, ctx);
+					drawSnake(snake, ctx);
+					
+				}
+				
+			}
+			
+			var tock = setInterval(tick, speed);
+			
+		</script>
+		
+	</body>
+	
+</html>
